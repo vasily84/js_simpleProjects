@@ -1,0 +1,177 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Сортировки массивов, сравнение скорости</title>
+    <script>
+    "use strict"
+    // язык HTML5/JavaScript
+    // учебная программа - измерение времени при вычислениях. Объект измерения - разные варианты сортировки массивов 
+    // автор В.Симонов, vasily_simonov@mail.ru, 28-dec-2018, код свободен
+
+    let ARRAYSize=1e4;
+
+    function newRandomArray(Asize){
+        let arr=new Array(Asize);
+        for(let i=0;i<arr.length;i++){
+            arr[i]=Math.random();
+        }
+
+        return arr;
+    }
+
+    function isSortedArray(arr){
+        for(let i=0;i<arr.length-1;i++){
+            if(arr[i]>arr[i+1]){
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    function arraySwapElement(arr,i,j){
+        let s;
+        s=arr[i];
+        arr[i]=arr[j];
+        arr[j]=s;    
+    }
+
+    function sortByRunTimeLibrary(arr){
+        function realCompare(a,b){
+            return a-b;
+        }
+        //------
+        arr.sort(realCompare);
+
+        return arr;
+    }
+    
+    function sortMethod1(arr){
+        let disorderFlag;  
+        do{
+            disorderFlag=false;
+            for(let i=0;i<arr.length-1;i++){
+                for(let j=i+1;j<arr.length;j++){
+                    if(arr[i]>arr[j]){
+                        arraySwapElement(arr,i,j);
+                        disorderFlag=true;
+                        }
+                }
+            }
+        }while(disorderFlag);
+
+        return arr;
+    }
+
+    function sortMethod2(arr){
+        for(let i=0;i<arr.length-1;i++){
+            for(let j=0;j<arr.length-1;j++){
+                if(arr[j]>arr[j+1]){
+                    arraySwapElement(arr,j,j+1);
+                    }
+            }
+        }
+
+        return arr;
+    }
+
+    function sortMethod3(arr){
+        // установить минимальное значение в элемент indexFrom массива, а максимальное - в indexTo.
+        function findAndSwapMinMaxToIndexes(indexFrom,indexTo){ 
+            let minVal,maxVal,minIndex,maxIndex;
+
+            minIndex=indexFrom;
+            minVal=arr[minIndex];
+
+            maxIndex=minIndex;
+            maxVal=minVal;
+
+            for(let k=indexFrom;k<=indexTo;k++){
+                if(arr[k]<minVal){
+                    minVal=arr[k];
+                    minIndex=k;
+                    continue;
+                }
+                if(arr[k]>maxVal){
+                    maxVal=arr[k];
+                    maxIndex=k;
+                }
+            }
+
+            arr[minIndex]=arr[indexFrom];
+            arr[maxIndex]=arr[indexTo];
+            // это присвоение делается последним
+            arr[indexFrom]=minVal;
+            arr[indexTo]=maxVal;
+
+            return ;
+        } 
+        //------
+        // основная работа по сортировке
+        let i=0;
+        let j=arr.length-1;
+
+        while(i<j){
+            findAndSwapMinMaxToIndexes(i++,j--);
+        }
+
+        return arr;
+    }
+
+    function sortByQuickSort(arr){ 
+        function quickSort(array) {
+            if (array.length <= 1) {
+                return array;
+                }
+
+            let pivot = array[0];
+  
+            let left = []; 
+            let right = [];
+
+            for (let i = 1; i < array.length; i++) {
+                array[i] < pivot ? left.push(array[i]) : right.push(array[i]);
+            }
+
+            return quickSort(left).concat(pivot, quickSort(right));
+        }
+
+        //------  
+        return quickSort(arr);
+    }
+
+    function printBenchMark(infoStr,sortFunc,arr){
+        let arr2=arr.slice(0); 
+        let time0,time1;
+
+        time0=Date.now();
+        arr2=sortFunc(arr2);
+        time1=Date.now();
+
+        if(isSortedArray(arr2)==false){
+            document.write(infoStr+ ' НЕ ВЫПОЛНЕНА '+'</br>');
+            return ;
+            }
+
+        document.write(infoStr+' заняла '+(time1-time0)+' миллисекунд'+'</br>');
+    }
+
+    function main(){
+        let unsortedArray=newRandomArray(ARRAYSize);
+
+        printBenchMark('сортировка встроенным sort()',sortByRunTimeLibrary,unsortedArray); 
+        document.write('</br>');
+        printBenchMark('сортировка методом1',sortMethod1,unsortedArray);
+        printBenchMark('сортировка методом2',sortMethod2,unsortedArray);
+        printBenchMark('сортировка методом3',sortMethod3,unsortedArray);     
+        printBenchMark('сортировка методом quickSort',sortByQuickSort,unsortedArray);  
+    }
+    </script>
+</head>
+<body>
+    <h2>Сравнение скорости разных алгоритмов сортировки</h2>
+    <script>
+    main();
+    </script>
+</body>

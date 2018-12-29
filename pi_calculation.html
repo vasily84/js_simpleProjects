@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<meta charset="utf-8" />
+	<title>Вычисление числа Пи методом случайных испытаний</title>
+	<script>
+	"use strict"
+	// язык HTML5/JavaScript
+	// учебная программа - вычисление числа ПИ методом статистических испытаний 
+	// автор В.Симонов, vasily_simonov@mail.ru, 27-dec-2018, код свободен
+
+	let Ninner=0; // сколько раз попали внутрь "1" круга
+	let Nouter=0; // сколько раз не попали внутрь "1" круга
+
+	function doPiCalculation(iteration){
+		let x,y,s;
+		
+		for(let i=0;i<iteration;i++){
+			x=Math.random();
+			y=Math.random();
+			s=x*x+y*y;
+			if(s<=1){Ninner++;}else{Nouter++;}
+			}
+		return 4.0*(Ninner/(Ninner+Nouter));
+	}
+
+	function main(){
+		const ITERSCALE=10;
+		let myPi,myDpi,myResult;
+			
+		for(let i=1;i<1e7;i*=10){
+			myPi=doPiCalculation(i*ITERSCALE);
+			myDpi=Math.abs((myPi-Math.PI)/Math.PI);
+			myResult='число итераций = '+(Ninner+Nouter)+', вычисленное ПИ = '+myPi+', погрешность ='+myDpi+'% </br>';
+			document.write(myResult);
+			}
+	}
+	</script>
+</head>
+<body>
+	<h2>Вычисление числа Пи методом случайных испытаний</h2>
+	<script>
+	main();
+	</script>
+</body>
+</html>
