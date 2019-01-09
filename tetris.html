@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Tetris</title>
+    <script>
+    "use strict"
+    // язык HTML5/JavaScript
+    // учебная программа - игра тетрис.
+    // автор В.Симонов, vasily_simonov@mail.ru, 2019, код свободен
+    const COLS=10; // размер игрового поля 10х20
+    const ROWS=20;
+
+    const VK_LEFT=37; 
+    const VK_RIGHT=39;
+    const VK_UP=38;
+    const VK_DOWN=40;
+    const VK_SPACE=32;
+    
+    let canvCtx;
+
+    let pole;
+    let figure;
+    let posX,posY;
+    let score;
+
+    function newPole(){
+        pole=new Array(COLS);
+        for(let i=0;i<pole.length;i++){
+            pole[i]=new Array(ROWS);
+            for(let j=0;j<ROWS;j++){
+                pole[i][j]=0;
+            }
+        }
+    }
+
+    function newFigure(){   
+        // генерируем векторное представление новой фигуры, все варианты равновероятны
+        let P=Math.round(Math.random()*6);
+        switch(P){
+            case 0:
+                figure = [0,-1, 0,0, 0,1, 0,2 ];
+                break;
+            case 1:
+                figure = [0,0, 0,1, 1,0, 1,1];
+                break ; 
+            
+            case 2:
+                figure = [0,-1, 0,0, 0,1, 1,0 ];
+                break ;
+            
+            case 3:
+                figure = [0,-1, 1,-1, 1,0, 1,1];
+                break ;
+            
+            case 4:
+                figure = [1,0, 0,0, 0,1, 0,2];
+                break ;
+
+            case 5:
+                figure = [0,0, 0,1, 1,1, 1,2];
+                break;
+
+            case 6:
+                figure = [0,0, 0,1, -1,1, -1,2];
+                break;
+        }
+
+        posX=COLS/2;
+        posY=1;
+        
+        return testFigurePosition(posX,posY);
+    }
+
+    function testFigurePosition(x,y){ // проверяет, можно ли вписать фигуру в данную позицию
+        let fx,fy;
+        for(let f=0;f<figure.length;f+=2){
+            fx=figure[f]+x;
+            fy=figure[f+1]+y;
+
+            if((fx<0)||(fx>=COLS)){ return false; } // ограничение по сторонам стакана
+            if(fy>=ROWS){ return false; } // ограничение вниз
+
+            if(pole[fx][fy]!=0){ return false; } // какая-то ячейка занята
+        }
+        return true; // фигура может быть вписана в эту позицию
+    }
+
+    function rotateFigureLeft(){
+        let fbuf=figure.slice(0);
+        let x,y;
+        for(let i=0;i<figure.length;i+=2){
+            x=figure[i];
+            y=figure[i+1];
+            figure[i]=y;
+            figure[i+1]=-x;
+        }        
+
+        if(testFigurePosition(posX,posY)){ return true; }
+
+        figure=fbuf.slice(0);
+        return false;
+    }
+
+    function rotateFigureRight(){
+        let fbuf=figure.slice(0);
+        let x,y;
+        for(let i=0;i<figure.length;i+=2){
+            x=figure[i];
+            y=figure[i+1];
+            figure[i]=-y;
+            figure[i+1]=x;
+        }
+
+        if(testFigurePosition(posX,posY)){ return true; }
+
+        figure=fbuf.slice(0);
+        return false;
+    }
+
+    function moveFigure(xstep,ystep){
+        if(testFigurePosition(posX+xstep,posY+ystep)){ 
+            posX+=xstep;
+            posY+=ystep;
+            return true; 
+        }
+
+        return false;
+    }
+
+    function copyFigureToPole(){
+        // рисуем фигуру
+        for(let f=0;f<figure.length;f+=2){
+            pole[figure[f]+posX][figure[f+1]+posY]=1;
+        }
+    }
+        
+    function redrawGame(){
+        function clearGame(){
+            canvCtx.fillStyle="rgb(255,255,255)";
+            canvCtx.fillRect(0,0,canvCtx.canvas.clientWidth,canvCtx.canvas.clientHeight);
+            canvCtx.fillStyle="rgb(0,0,0)";
+        }
+
+        function drawCell(a,b){
+            const w=canvCtx.canvas.clientWidth/COLS;
+            const h=canvCtx.canvas.clientHeight/ROWS;
+            canvCtx.fillRect(a*w,b*h,w,h);
+        }
+
+        //-----
+        canvCtx.beginPath();
+
+        clearGame();
+        // рисуем поле
+        for(let i=0;i<COLS;i++){
+            for(let j=0;j<ROWS;j++){
+                if(pole[i][j]!=0){
+                    drawCell(i,j);
+                    }
+            }
+        }
+
+        // рисуем фигуру
+        for(let f=0;f<figure.length;f+=2){
+            drawCell(figure[f]+posX,figure[f+1]+posY);
+        }
+
+        canvCtx.closePath();
+        canvCtx.stroke();
+    }
+
+    function removeRows(){
+        function isFullRow(R){ // все ли ячейки строки заполнены ?
+            for(let t=0;t<COLS;t++){
+                if(pole[t][R]==0){
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function shiftPole(R){ // удалить строку R, сдвинуть игровое поле вниз, добавить новую строчку наверх стакана.  
+            for(let i=0;i<COLS;i++){ // сдвигаем игровое поле вниз
+                for(let j=R;j>1;j--){
+                    pole[i][j]=pole[i][j-1];
+                }
+            }
+
+            // нулим верхнюю строчку в стакане
+            for(let z=0;z<COLS;z++){ pole[z][0]=0; }
+        }
+
+        function findAndRemoveRows(counts){
+            for(let t=0;t<ROWS;t++){
+                if(isFullRow(t)){
+                    counts++;
+                    shiftPole(t);
+                    return findAndRemoveRows(counts); // реккурентный вызов для поиска и удаления других возможных строк.
+                }
+            }
+        }
+
+        function calculateScoreAddition(fCount){ // прогрессивная шкала оценки
+            switch(fCount){
+            case 1:
+                return 1;
+                
+            case 2:
+                return 3;
+                
+            case 3:
+                return 7;
+                
+            case 4:
+                return 15;
+            }
+
+            return 0;
+        }     
+        
+        //-----
+        score+=calculateScoreAddition(findAndRemoveRows(0));
+    }
+
+    function newGame(){
+        score=0;
+        newPole();
+        newFigure();
+    }
+
+    function onTimer(){
+        if(moveFigure(0,1)==false){
+            copyFigureToPole();
+            removeRows();
+            if(newFigure()==false){
+                newGame();
+            }
+        }
+        redrawGame();
+    }
+
+    function onKeyDown(){
+        switch(event.keyCode){
+            case VK_UP:
+                rotateFigureLeft();
+                break;
+
+            case VK_DOWN:
+                rotateFigureRight();
+                break;
+
+            case VK_LEFT:
+                moveFigure(-1,0);
+                break;
+
+            case VK_RIGHT:
+                moveFigure(1,0);
+                break;
+            
+            case VK_SPACE:
+                moveFigure(0,1);
+                break;
+
+            default:
+                return ;
+        }
+
+        redrawGame();
+    }
+
+    function main(){
+        // инициализация
+        canvCtx = document.getElementById("canvasMain").getContext("2d");
+        newGame();
+        setInterval(onTimer,400);
+
+        // далее все управление в обработчиках нажатии клавиш и таймере
+        // 
+    }
+    </script>
+</head>
+<body onkeydown="onKeyDown()">
+    <h2>TETRIS</h2>
+    <canvas id="canvasMain" width="250" height="500">
+    </canvas>
+    <script>
+    main();
+    </script>
+</body>
