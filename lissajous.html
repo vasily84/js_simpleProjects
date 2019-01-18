@@ -1,0 +1,103 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Фигуры Лиссажу</title>
+    <script>
+    "use strict"
+    // язык HTML5/JavaScript
+    // учебная программа - фигуры Лиссажу.
+    // автор В.Симонов, vasily_simonov@mail.ru, 2019, код свободен
+
+    let canvCtx;
+
+    let W1, W2; // множители у частот
+    let centerX,centerY, AmplX,AmplY,Phase;
+    
+    function reDraw(){
+        function setPixel(x,y){
+            canvCtx.fillRect(x,y,1,1);    
+        }
+
+        canvCtx.beginPath();
+
+        canvCtx.fillStyle="rgb(255,255,255)";
+        canvCtx.fillRect(0,0,canvCtx.canvas.clientWidth,canvCtx.canvas.clientHeight);
+        canvCtx.fillStyle="rgb(0,0,0)";
+
+        
+        let phaseAgain = W1*W2*2.0*Math.PI;
+
+        for(let phase = 0 ; phase <phaseAgain ; phase += Math.PI/1800){
+            setPixel(centerX+Math.cos(W1*phase)*AmplX,centerY+Math.cos(W2*phase+Phase)*AmplY);
+        }
+          
+        canvCtx.closePath();
+        canvCtx.stroke();
+    }
+
+
+    function btnW1W2_onClick(){
+        let str = prompt("введите соотношение частот через : , например 3:5 ");
+        if(str==null){ return ; }
+
+        let strArr;
+        strArr = str.split(":");
+
+        if(strArr.length!=2){ return; }
+
+        let w1,w2;
+
+        w1 = parseInt(strArr[0],10);   
+        if(w1==NaN){ return ; }
+
+        w2 = parseInt(strArr[1],10);   
+        if(w2==NaN){ return ; }
+
+        W1 = w1;
+        W2 = w2;
+
+        reDraw();
+    }
+
+    function btnPhase_onClick(){
+        let str = prompt("введите сдвиг фазы в градусах, например 45 ");
+        if(str==null){ return ; }
+        
+        let phase;
+
+        phase = parseInt(str,10);   
+        if(phase==NaN){ return ; }
+
+        Phase = phase*Math.PI/180;
+
+        reDraw();
+    }
+
+
+    function main(){
+        // инициализация
+        canvCtx = document.getElementById("canvasMain").getContext("2d");
+        centerX = canvCtx.canvas.clientWidth/2;
+        centerY = canvCtx.canvas.clientHeight/2;
+        AmplX = centerX*0.9;
+        AmplY = centerY*0.9;
+        W1 = 3;
+        W2 = 7;
+        Phase = 0;
+        reDraw();
+    }
+    </script>
+</head>
+
+<body>
+    <canvas id="canvasMain" width="640" height="480">
+    </canvas>
+    <input type="button" id="btnW1W2" value="Частоты" onclick="btnW1W2_onClick()">
+    </input>
+    <input type="button" id="btnPhase" value="Фаза" onclick="btnPhase_onClick()">
+    </input>
+    <script>
+    main();
+    </script>
+</body>
